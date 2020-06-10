@@ -1,0 +1,66 @@
+#include <ESP8266WiFi.h>
+#include <FirebaseArduino.h>
+
+int moisture = D4;
+int water = D2;
+int fertilizer = D3;
+// Set these to run example.
+#define FIREBASE_HOST "moisture-99542.firebaseio.com"
+#define FIREBASE_AUTH "6JzNKC46VIePhgq2UoHYXSbaOf3Tb2zmv0bA0DDb"
+#define WIFI_SSID "redmi"
+#define WIFI_PASSWORD "12340987"
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(moisture,INPUT);
+  pinMode(water,OUTPUT);
+  pinMode(fertilizer,OUTPUT);
+  digitalWrite(fertilizer,HIGH);
+  digitalWrite(water,HIGH);
+  
+  // connect to wifi.
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("connecting");
+  while (WiFi.status() != WL_CONNECTED) {
+  Serial.print(".");
+  delay(500);
+  }
+  Serial.println();
+  Serial.print("connected: ");
+  Serial.println(WiFi.localIP());
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+ 
+  digitalWrite(fertilizer,LOW);
+  Serial.println("fertilizer ON");
+  Firebase.pushString("Fertilizer", "ON");
+  delay(20000);
+  
+  digitalWrite(fertilizer,HIGH);
+  Firebase.pushString("Fertilizer", "OFF");
+  Serial.println("fertilizer OFF");
+  delay(10000);
+}
+
+
+
+void loop() {
+  // update value
+  int val = digitalRead(moisture);
+  if(val == 0){
+    digitalWrite(water,HIGH);
+  }
+  else{
+    digitalWrite(water,LOW);
+  }
+   
+  Firebase.pushInt("Moisture Value",val);
+    Serial.print("moisture value ");
+    Serial.println(val);
+  // handle error
+  if (Firebase.failed()) {
+      Serial.print("setting /number failed:");
+      Serial.println(Firebase.error());  
+      return;
+  }
+  delay(500);
+}
